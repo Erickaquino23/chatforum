@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página de Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-200 flex items-center justify-center h-screen">
+
+<div class="bg-purple-300 p-6 rounded-lg shadow-md w-96 border-b border-black shadow-lg">
+    <h2 class="text-2xl font-bold mb-4 text-center">Login</h2>
+    <form action="{{ url_for('login') }}" method="POST">
+        <input type="text" name="username" placeholder="Digite seu nome" required class="border-b border-black p-2 outline-none w-full shadow-lg mb-4 rounded-lg placeholder-black">
+        <input type="password" name="password" placeholder="Digite sua senha" required class="border-b border-black p-2 outline-none w-full shadow-lg mb-4 rounded-lg placeholder-black">
+        <button type="submit" class="bg-green-500 text-white p-2 rounded w-full hover:bg-green-600 shadow-lg">Entrar</button>
+    </form>
+    <div class="mt-4 text-center">
+        <a href="{{ url_for('cadastro') }}" class="text-black hover:underline ">Não tem uma conta? Cadastre-se aqui.</a>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="mt-4">
+            {% for category, message in messages %}
+                <li class="text-red-500">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+</div>
+
+</body>
+</html>

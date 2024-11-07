@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat em Tempo Real</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-200 font-sans">
+    <div class="bg-purple-300 max-w-2xl mx-auto my-8 bg-white p-6 rounded-lg shadow-lg">
+        <div id="chat" class="space-y-4 h-screen max-h-96 overflow-y-auto p-4 border-b">
+            {% for mensagem in mensagens %}
+                <div class="flex {{ 'justify-end' if mensagem.username == username else 'justify-start' }}" id="mensagem-{{ mensagem.id }}">
+                    <div class="flex flex-col space-y-1 p-2 bg-gray-50 rounded-lg shadow-sm max-w-xs">
+                        <span class="font-semibold text-blue-500">{{ mensagem.username }}:</span>
+                        <span class="text-gray-700">{{ mensagem.conteudo }}</span>
+                        
+                        {% if mensagem.username == username %}
+                            <!-- Botão de excluir para mensagens do usuário atual -->
+                            <button class="mt-2 text-red-500 hover:text-red-700" onclick="apagarMensagem({{ mensagem.id }})">Excluir</button>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-4">
+            <input type="text" id="mensagemInput" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Digite sua mensagem..." />
+            <button id="enviarBtn" class="w-full mt-2 p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none">Enviar</button>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        function scrollToEnd() {
+            var chatDiv = document.getElementById("chat");
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
+
+        scrollToEnd();
+
+        document.getElementById("enviarBtn").addEventListener("click", function() {
+            var mensagemInput = document.getElementById("mensagemInput");
+            var mensagem = mensagemInput.value.trim();
+            if (mensagem) {
+                socket.emit('send_message', {conteudo: mensagem});
+                mensagemInput.value = '';
+                scrollToEnd();
+            }
+        });
+
+        // Função para apagar a mensagem
+        function apagarMensagem(id) {
+            socket.emit('delete_message', {id: id});
+        }
+
+        // Ouvir a emissão de novas mensagens no servidor
+        socket.on('receive_message', function(data) {
+            var mensagemDiv = document.createElement("div");
+            mensagemDiv.classList.add("flex", data.username === "{{ username }}" ? "justify-end" : "justify-start");
+
+            var messageContent = document.createElement("div");
+            messageContent.classList.add("flex", "flex-col", "space-y-1", "p-2", "bg-gray-50", "rounded-lg", "shadow-sm", "max-w-xs");
+
+            var userSpan = document.createElement("span");
+            userSpan.classList.add("font-semibold", "text-blue-500");
+            userSpan.innerText = data.username + ":";
+
+            var conteudoSpan = document.createElement("span");
+            conteudoSpan.classList.add("text-gray-700");
+            conteudoSpan.innerText = data.conteudo;
+
+            messageContent.appendChild(userSpan);
+            messageContent.appendChild(conteudoSpan);
+
+            // Adiciona o botão de excluir apenas para as mensagens do usuário
+            if (data.username === "{{ username }}") {
+                var deleteButton = document.createElement("button");
+                deleteButton.classList.add("mt-2", "text-red-500", "hover:text-red-700");
+                deleteButton.innerText = "Excluir";
+                deleteButton.onclick = function() {
+                    apagarMensagem(data.id);
+                };
+                messageContent.appendChild(deleteButton);
+            }
+
+            mensagemDiv.appendChild(messageContent);
+            document.getElementById("chat").appendChild(mensagemDiv);
+
+            scrollToEnd();
+        });
+
+        // Ouvir para a exclusão de mensagens
+        socket.on('delete_message', function(id) {
+            var mensagemDiv = document.getElementById("mensagem-" + id);
+            if (mensagemDiv) {
+                mensagemDiv.remove();
+            }
+        });
+    </script>
+
+</body>
+</html>
